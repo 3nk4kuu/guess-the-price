@@ -1,40 +1,58 @@
-import TextField from "@mui/material/TextField";
+import { useState, useEffect, useRef } from "react";
+import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import { useState } from "react";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
+import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
-import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+
+const nextRoundTimer = 2000; 
 
 function StorePage() {
-  const [game, setGame] = useState(null);
-  const [gameList, setGameList] = useState([]);
-  const [difficulty, setDifficulty] = useState("easy");
+  const inputRef = useRef(null);
 
+  // GAME DATA
+  const [games, setGames] = useState([]);
+  const [gameIndex, setGameIndex] = useState(0);
+  const [gameResults, setGameResults] = useState(Array(10).fill(null));
+  const [difficulty, setDifficulty] = useState("medium");
+
+  // USER PROGRESS
   const [guess, setGuess] = useState("");
-  const [message, setMessage] = useState("");
-  const [isCorrect, setIsCorrect] = useState(false);
+  const [attempts, setAttempts] = useState([]);
   const [score, setScore] = useState(0);
 
-  const getRandomGame = () => {
-    if (game && !isCorrect) {
-      setMessage("Must guess the price of current game before moving on.");
-      return;
-    }
+  // PLAYER FEEDBACK
+  const [message, setMessage] = useState("");
+  const [isCorrect, setIsCorrect] = useState(false);
 
+  // CURRENTLY DISPLAYED GAME
+  const currentGame = games.length > 0 ? games[gameIndex] : null;
+
+  // AUTOFOCUS INPUT FIELD
+  useEffect(() => {
+    if (games.length > 0 && !isCorrect && attempts.length < 3 && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [gameIndex, games.length, isCorrect, attempts.length]);
+
+  // GAME LOGIC
+  const startGame = () => {
     setGuess("");
     setMessage("");
     setIsCorrect(false);
+    setAttempts([]);
+    setGameResults(Array(10).fill(null));
 
     console.log("getting game data");
 
-    // set dfualts - medium
+    // DEFAULT DIFF - MED
     let minReviews = 5000;
-    let sortParams = ""; 
+    let sortParams = "";
     let maxPages = 20;
 
     if (difficulty === "easy") {
@@ -48,9 +66,8 @@ function StorePage() {
     }
 
     const randomPage = Math.floor(Math.random() * maxPages);
-    // easy 50k+, medium 5k+, hard 500+
-    
-   fetch(`https://www.cheapshark.com/api/1.0/deals?storeID=1&pageNumber=${randomPage}&minimumReviewCount=${minReviews}${sortParams}`)
+
+    fetch(`https://www.cheapshark.com/api/1.0/deals?storeID=1&pageNumber=${randomPage}&minimumReviewCount=${minReviews}${sortParams}`)
       .then((response) => {
         if (response.status === 429) {
           throw new Error("RATE_LIMIT");
@@ -58,17 +75,25 @@ function StorePage() {
         return response.json();
       })
       .then((data) => {
-        setGameList(data);
-
         if (data.length > 0) {
-          const randomIndex = Math.floor(Math.random() * data.length);
-          const selectedGame = data[randomIndex];
-          console.log("got game data successfully", selectedGame);
+          const selectedGames = [];
+          const gamePool = [...data]; 
+          
+          while (selectedGames.length < 10 && gamePool.length > 0) {
+            const randomIndex = Math.floor(Math.random() * gamePool.length);
+            const drawnGame = gamePool.splice(randomIndex, 1)[0];
+            selectedGames.push(drawnGame);
+          }
 
-          setGame(selectedGame);
+          setGames(selectedGames);
+          setGameIndex(0);
+          console.log("got game data successfully", selectedGames);
         } else {
-          console.log(`no games with ${minReviews}+ reviews on page`, randomPage);
-          setTimeout(getRandomGame, 1000);
+          console.log(
+            `no games with ${minReviews}+ reviews on page`,
+            randomPage,
+          );
+          setTimeout(startGame, 1000);
         }
       })
       .catch((error) => {
@@ -81,13 +106,25 @@ function StorePage() {
         }
       });
   };
-  //   TODO: add loading / mui skeleton when getting data?
+
+  const handleNextGame = () => {
+    if (gameIndex < games.length - 1) {
+      setGameIndex(gameIndex + 1);
+      setAttempts([]);
+      setGuess("");
+      setMessage("");
+      setIsCorrect(false);
+    } else {
+      setMessage("10 Games Completed! Start a new round?");
+      setGames([]);
+    }
+  };
 
   const handleGuess = () => {
-    if (!game) return;
+    if (games.length === 0 || isCorrect || attempts.length >= 3) return;
 
     const guessInt = parseInt(guess, 10);
-    const actualPrice = parseFloat(game.normalPrice);
+    const actualPrice = parseFloat(currentGame.normalPrice);
 
     if (isNaN(guessInt)) {
       setMessage("Please enter a valid price.");
@@ -100,16 +137,39 @@ function StorePage() {
     ) {
       setMessage(`Correct! The original price is $${actualPrice}`);
       setIsCorrect(true);
-    } else if (guessInt < actualPrice) {
-      console.log(guessInt, actualPrice);
-      setMessage("Too low! Try again.");
-      setGuess("");
+      setAttempts([...attempts, true]);
+
+      const newResults = [...gameResults];
+      newResults[gameIndex] = true;
+      setGameResults(newResults);
+      
+      setTimeout(handleNextGame, nextRoundTimer);
     } else {
-      console.log(guessInt, actualPrice);
-      setMessage("Too high! Try again.");
+      const newAttempts = [...attempts, false];
+      setAttempts(newAttempts);
       setGuess("");
+
+      if (newAttempts.length >= 3) {
+        setMessage(`Out of tries! The original price was $${actualPrice}`);
+
+        const newResults = [...gameResults];
+        newResults[gameIndex] = false;
+        setGameResults(newResults);
+        
+        setTimeout(handleNextGame, nextRoundTimer);
+      } else if (guessInt < actualPrice) {
+        console.log(currentGame.title, guessInt, actualPrice);
+        setMessage("Too low! Try again.");
+      } else {
+        console.log(currentGame.title, guessInt, actualPrice);
+        setMessage("Too high! Try again.");
+      }
     }
-    // TODO: change to hot/cold colors to later !!!
+  };
+
+  // EVENT HANDLERS
+  const handleGuessChange = (event) => {
+    setGuess(event.target.value);
   };
 
   const handleKeyDown = (enter) => {
@@ -118,9 +178,19 @@ function StorePage() {
     }
   };
 
-  const handleGuessChange = (event) => {
-    setGuess(event.target.value);
+  // BUTTON TEXT
+  const getButtonText = () => {
+    if (games.length === 0) {
+      return "Start Guessing";
+    }
+    
+    if (isCorrect || attempts.length >= 3) {
+      return "Getting next game...";
+    }
+    return `Next Game (${gameIndex + 1}/10)`;
   };
+
+export default StorePage;
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", p: 3 }}>
@@ -136,7 +206,7 @@ function StorePage() {
         Guess The Price
       </Typography>
 
-      <FormControl sx={{width: "25%", mx: "auto"}}>
+      <FormControl sx={{ width: "25%", mx: "auto" }}>
         <InputLabel id="game-difficulty">Difficulty</InputLabel>
         <Select
           labelId="game-difficulty"
@@ -159,26 +229,50 @@ function StorePage() {
           minWidth: "200px",
         }}
         variant="contained"
-        onClick={getRandomGame}
+        onClick={games.length > 0 ? handleNextGame : startGame}
+        disabled={games.length > 0} 
       >
-        {game ? "Get Next Game" : "Start Guessing"}
+        {getButtonText()}
       </Button>
 
+      {/* PROGRESS INDICATORS */}
+      {(games.length > 0 || message.includes("Start a new round?")) && (
+        <Box
+          sx={{ display: "flex", justifyContent: "center", gap: 1.5, mb: 3 }}
+        >
+          {gameResults.map((result, index) => {
+            let bgColor = "grey.300";
+            if (result === true) bgColor = "success.main";
+            if (result === false) bgColor = "error.main";
+
+            return (
+              <Box
+                key={index}
+                sx={{
+                  width: 18,
+                  height: 18,
+                  bgcolor: bgColor,
+                  borderRadius: 1,
+                }}
+              />
+            );
+          })}
+        </Box>
+      )}
+
       {/* GAME CARD */}
-      {/* TODO: make game card into component and put in carousel of 10 - inspo discovery queue */}
-      {game && (
-        <Card sx={{ minWidth: 275, maxWidth: "50%", mx: "auto" }}>
+      {currentGame && (
+        <Card sx={{ minWidth: 275, maxWidth: "75%", mx: "auto" }}>
           <CardContent>
             <Typography variant="h5" component="div" gutterBottom>
-              {game.title}
+              {currentGame.title}
             </Typography>
 
             <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
               <strong>Release Date:</strong>{" "}
-              {new Date(game.releaseDate * 1000).toLocaleDateString()}
+              {new Date(currentGame.releaseDate * 1000).toLocaleDateString()}
             </Typography>
 
-            {/* TODO: get images/store scs later */}
             <Box
               sx={{
                 width: "100%",
@@ -190,23 +284,18 @@ function StorePage() {
             />
 
             <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-              <strong>Description:</strong>{" "}
+              <strong>Steam Rating:</strong> {currentGame.steamRatingText} (
+              {currentGame.steamRatingPercent}%)
             </Typography>
 
-            {/* TODO: change to have color like steam */}
-            <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-              <strong>Steam Rating:</strong> {game.steamRatingText} (
-              {game.steamRatingPercent}%)
-            </Typography>
-
-            {/* TODO: change to number with color bkg later */}
             <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
               <strong>Metascore: </strong>
-              {game.metacriticScore}
+              {currentGame.metacriticScore}
             </Typography>
 
             <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-              <strong>Steam Review Count:</strong> {game.steamRatingCount}
+              <strong>Steam Review Count:</strong>{" "}
+              {currentGame.steamRatingCount}
             </Typography>
 
             <Box
@@ -216,34 +305,50 @@ function StorePage() {
               <TextField
                 label="Guess the original price"
                 variant="filled"
-                // type="number"
                 value={guess}
                 onChange={handleGuessChange}
                 onKeyDown={handleKeyDown}
-                disabled={isCorrect}
+                disabled={isCorrect || attempts.length >= 3}
                 fullWidth
+                inputRef={inputRef} 
               />
             </Box>
+
+            <Typography 
+                variant="body2" 
+                align="center" 
+                color="text.secondary" 
+                sx={{ mt: 1 }}
+              >
+                {3 - attempts.length} tries remaining
+              </Typography>
+            
           </CardContent>
         </Card>
       )}
 
       {/* MESSAGE CARD */}
-      {message && (
-        <Card sx={{ minWidth: 275, maxWidth: 500, mx: "auto", mt: 3 }}>
-          <CardContent sx={{ textAlign: "center", py: 2 }}>
-            <Typography
-              variant="body1"
-              color={
-                message.startsWith("Correct") ? "success.main" : "error.main"
-              }
-              sx={{ fontWeight: "bold" }}
-            >
-              {message}
-            </Typography>
-          </CardContent>
-        </Card>
-      )}
+      <Card
+        sx={{
+          minWidth: 275,
+          maxWidth: 500,
+          mx: "auto",
+          my: 3,
+          visibility: message ? "visible" : "hidden", 
+        }}
+      >
+        <CardContent sx={{ textAlign: "center", py: 2 }}>
+          <Typography
+            variant="body1"
+            color={
+              message.startsWith("Correct") ? "success.main" : "error.main"
+            }
+            sx={{ fontWeight: "bold" }}
+          >
+            {message || " "} 
+          </Typography>
+        </CardContent>
+      </Card>
     </Box>
   );
 }
