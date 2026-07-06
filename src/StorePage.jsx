@@ -190,8 +190,6 @@ function StorePage() {
     return `Next Game (${gameIndex + 1}/10)`;
   };
 
-export default StorePage;
-
   return (
     <Box sx={{ display: "flex", flexDirection: "column", p: 3 }}>
       <Typography
