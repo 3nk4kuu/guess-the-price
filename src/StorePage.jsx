@@ -294,11 +294,11 @@ function StorePage() {
   // BUTTON TEXT
   const getButtonText = () => {
     if (roundComplete) {
-      return "Continue Shopping";
+      return "Play Again";
     }
 
     if (games.length === 0) {
-      return "Start Shopping";
+      return "Start Guessing";
     }
 
     if (isCorrect || attempts.length >= 3) {
@@ -313,6 +313,7 @@ function StorePage() {
         difficulty={difficulty}
         onDifficultyChange={(value) => setDifficulty(value)}
         gamesPerRound={gamesPerRound}
+        disabled={games.length > 0 && !roundComplete}
       />
 
       <Button

@@ -55,7 +55,7 @@ function GameCard({
     <Card
       sx={{
         minWidth: 275,
-        maxWidth: "60%",
+        maxWidth: "65%",
         mx: "auto",
         bgcolor: cardDarkGrey,
       }}

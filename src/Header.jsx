@@ -10,7 +10,7 @@ import Typography from "@mui/material/Typography";
 import HowToPlay from "./HowToPlay";
 import { surfaceGrey, titleGrey, cardDarkGrey, outlineColor, outlineWidth } from "./theme";
 
-function Header({ difficulty, onDifficultyChange, gamesPerRound }) {
+function Header({ difficulty, onDifficultyChange, gamesPerRound, disabled }) {
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
 
   return (
@@ -34,7 +34,7 @@ function Header({ difficulty, onDifficultyChange, gamesPerRound }) {
       </Typography>
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <FormControl sx={{ width: 200, bgcolor: cardDarkGrey }}>
+        <FormControl sx={{ width: 200, bgcolor: cardDarkGrey }} disabled={disabled}>
           <InputLabel id="game-difficulty">Difficulty</InputLabel>
           <Select
             labelId="game-difficulty"
@@ -42,6 +42,7 @@ function Header({ difficulty, onDifficultyChange, gamesPerRound }) {
             value={difficulty}
             label="Difficulty"
             onChange={(diff) => onDifficultyChange(diff.target.value)}
+            disabled={disabled}
             sx={{ bgcolor: cardDarkGrey, height: 56 }}
           >
             <MenuItem value="easy">Easy</MenuItem>
