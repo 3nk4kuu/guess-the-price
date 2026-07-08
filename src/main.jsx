@@ -1,11 +1,16 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-// import './index.css'
-// import App from './App.jsx'
+import CssBaseline from '@mui/material/CssBaseline'
+import { ThemeProvider } from '@mui/material/styles'
 import StorePage from './StorePage.jsx'
+import { theme } from './theme.js'
+import './index.css'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <StorePage />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <StorePage />
+    </ThemeProvider>
   </StrictMode>,
 )

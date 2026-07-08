@@ -1,24 +1,32 @@
 import { useState, useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import MenuItem from "@mui/material/MenuItem";
-import Select from "@mui/material/Select";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
+import GameCard from "./GameCard";
+import MessageCard from "./MessageCard";
+import ResultsPage from "./ResultsPage";
+import Header from "./Header";
+import HowToPlay from "./HowToPlay";
+import { surfaceGrey } from "./theme";
 
-const nextRoundTimer = 2000; 
+const nextRoundTimer = 1500;
+const gamesPerRound = 5;
 
 function StorePage() {
   const inputRef = useRef(null);
 
+  // GET NEXT GAME DATA WHILE ON CURRENT GAME
+  const nextGameData = useRef({});
+
   // GAME DATA
   const [games, setGames] = useState([]);
   const [gameIndex, setGameIndex] = useState(0);
-  const [gameResults, setGameResults] = useState(Array(10).fill(null));
+  const [gameResults, setGameResults] = useState(
+    Array(gamesPerRound).fill(null),
+  );
+  const [finalGuesses, setFinalGuesses] = useState(
+    Array(gamesPerRound).fill(null),
+  );
+  const [roundComplete, setRoundComplete] = useState(false);
   const [difficulty, setDifficulty] = useState("medium");
 
   // USER PROGRESS
@@ -29,24 +37,110 @@ function StorePage() {
   // PLAYER FEEDBACK
   const [message, setMessage] = useState("");
   const [isCorrect, setIsCorrect] = useState(false);
+  const [guessDiff, setGuessDiff] = useState(null);
 
   // CURRENTLY DISPLAYED GAME
   const currentGame = games.length > 0 ? games[gameIndex] : null;
+  const [extraData, setExtraData] = useState({
+    description: "",
+    screenshots: [],
+  });
 
   // AUTOFOCUS INPUT FIELD
   useEffect(() => {
-    if (games.length > 0 && !isCorrect && attempts.length < 3 && inputRef.current) {
+    if (
+      games.length > 0 &&
+      !isCorrect &&
+      attempts.length < 3 &&
+      inputRef.current
+    ) {
       inputRef.current.focus();
     }
   }, [gameIndex, games.length, isCorrect, attempts.length]);
+
+  // FETCHING RAWG API DATA FOR NEXT GAME
+  useEffect(() => {
+    const fetchRawgData = (gameToFetch) => {
+      if (!gameToFetch || nextGameData.current[gameToFetch.title]) return;
+
+      const RAWG_KEY = import.meta.env.VITE_RAWG_KEY;
+
+      fetch(
+        `https://api.rawg.io/api/games?search=${encodeURIComponent(gameToFetch.title)}&key=${RAWG_KEY}`,
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          const rawgGame = data.results[0];
+
+          if (rawgGame) {
+            const screenshots =
+              rawgGame.short_screenshots?.map((s) => s.image) || [];
+
+            fetch(
+              `https://api.rawg.io/api/games/${rawgGame.id}?key=${RAWG_KEY}`,
+            )
+              .then((response) => response.json())
+              .then((detailData) => {
+                const gameData = {
+                  description:
+                    detailData.description_raw || "No description available.",
+                  screenshots: screenshots,
+                };
+
+                nextGameData.current[gameToFetch.title] = gameData;
+                screenshots.forEach((url) => {
+                  const img = new Image();
+                  img.src = url;
+                });
+                if (currentGame && gameToFetch.title === currentGame.title) {
+                  setExtraData(gameData);
+                }
+              });
+          } else {
+            // RAWG HAS NOTHING FOR THIS TITLE - FALL BACK TO CHEAPSHARK'S THUMBNAIL
+            const gameData = {
+              description: "No description available.",
+              screenshots: gameToFetch.thumb ? [gameToFetch.thumb] : [],
+            };
+            nextGameData.current[gameToFetch.title] = gameData;
+            if (currentGame && gameToFetch.title === currentGame.title) {
+              setExtraData(gameData);
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("RAWG API failed", error);
+        });
+    };
+
+    if (games.length > 0) {
+      const current = games[gameIndex];
+      const next = games[gameIndex + 1];
+
+      if (current && nextGameData.current[current.title]) {
+        setExtraData(nextGameData.current[current.title]);
+      } else {
+        fetchRawgData(current);
+      }
+      if (next) {
+        fetchRawgData(next);
+      }
+    }
+  }, [gameIndex, games, currentGame]);
 
   // GAME LOGIC
   const startGame = () => {
     setGuess("");
     setMessage("");
     setIsCorrect(false);
+    setGuessDiff(null);
     setAttempts([]);
-    setGameResults(Array(10).fill(null));
+    setGameResults(Array(gamesPerRound).fill(null));
+    setFinalGuesses(Array(gamesPerRound).fill(null));
+    setRoundComplete(false);
+
+    setExtraData({ description: "", screenshots: [] });
+    nextGameData.current = {};
 
     console.log("getting game data");
 
@@ -67,7 +161,9 @@ function StorePage() {
 
     const randomPage = Math.floor(Math.random() * maxPages);
 
-    fetch(`https://www.cheapshark.com/api/1.0/deals?storeID=1&pageNumber=${randomPage}&minimumReviewCount=${minReviews}${sortParams}`)
+    fetch(
+      `https://www.cheapshark.com/api/1.0/deals?storeID=1&pageNumber=${randomPage}&minimumReviewCount=${minReviews}${sortParams}`,
+    )
       .then((response) => {
         if (response.status === 429) {
           throw new Error("RATE_LIMIT");
@@ -77,9 +173,9 @@ function StorePage() {
       .then((data) => {
         if (data.length > 0) {
           const selectedGames = [];
-          const gamePool = [...data]; 
-          
-          while (selectedGames.length < 10 && gamePool.length > 0) {
+          const gamePool = [...data];
+
+          while (selectedGames.length < gamesPerRound && gamePool.length > 0) {
             const randomIndex = Math.floor(Math.random() * gamePool.length);
             const drawnGame = gamePool.splice(randomIndex, 1)[0];
             selectedGames.push(drawnGame);
@@ -108,15 +204,15 @@ function StorePage() {
   };
 
   const handleNextGame = () => {
-    if (gameIndex < games.length - 1) {
+    if (gameIndex < gamesPerRound - 1) {
       setGameIndex(gameIndex + 1);
       setAttempts([]);
       setGuess("");
       setMessage("");
       setIsCorrect(false);
+      setGuessDiff(null);
     } else {
-      setMessage("10 Games Completed! Start a new round?");
-      setGames([]);
+      setRoundComplete(true);
     }
   };
 
@@ -125,9 +221,18 @@ function StorePage() {
 
     const guessInt = parseInt(guess, 10);
     const actualPrice = parseFloat(currentGame.normalPrice);
+    console.log(guessInt, actualPrice);
 
     if (isNaN(guessInt)) {
       setMessage("Please enter a valid price.");
+      setGuessDiff(null);
+      return;
+    }
+
+    if (attempts.includes(guessInt)) {
+      setMessage(`Already guessed $${guessInt}! Try a different number.`);
+      setGuess("");
+      setGuessDiff(null);
       return;
     }
 
@@ -137,17 +242,23 @@ function StorePage() {
     ) {
       setMessage(`Correct! The original price is $${actualPrice}`);
       setIsCorrect(true);
+      setGuessDiff(0);
       setAttempts([...attempts, true]);
 
       const newResults = [...gameResults];
       newResults[gameIndex] = true;
       setGameResults(newResults);
-      
+
+      const newGuesses = [...finalGuesses];
+      newGuesses[gameIndex] = guessInt;
+      setFinalGuesses(newGuesses);
+
       setTimeout(handleNextGame, nextRoundTimer);
     } else {
-      const newAttempts = [...attempts, false];
+      const newAttempts = [...attempts, guessInt];
       setAttempts(newAttempts);
       setGuess("");
+      setGuessDiff(Math.abs(guessInt - actualPrice));
 
       if (newAttempts.length >= 3) {
         setMessage(`Out of tries! The original price was $${actualPrice}`);
@@ -155,13 +266,15 @@ function StorePage() {
         const newResults = [...gameResults];
         newResults[gameIndex] = false;
         setGameResults(newResults);
-        
+
+        const newGuesses = [...finalGuesses];
+        newGuesses[gameIndex] = guessInt;
+        setFinalGuesses(newGuesses);
+
         setTimeout(handleNextGame, nextRoundTimer);
       } else if (guessInt < actualPrice) {
-        console.log(currentGame.title, guessInt, actualPrice);
         setMessage("Too low! Try again.");
       } else {
-        console.log(currentGame.title, guessInt, actualPrice);
         setMessage("Too high! Try again.");
       }
     }
@@ -180,66 +293,50 @@ function StorePage() {
 
   // BUTTON TEXT
   const getButtonText = () => {
-    if (games.length === 0) {
-      return "Start Guessing";
+    if (roundComplete) {
+      return "Continue Shopping";
     }
-    
+
+    if (games.length === 0) {
+      return "Start Shopping";
+    }
+
     if (isCorrect || attempts.length >= 3) {
       return "Getting next game...";
     }
-    return `Next Game (${gameIndex + 1}/10)`;
+    return `Next Game (${gameIndex + 1}/${gamesPerRound})`;
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", p: 3 }}>
-      <Typography
-        variant="h2"
-        component="div"
-        sx={{
-          mx: "auto",
-          mt: 5,
-          textAlign: "center",
-        }}
-      >
-        Guess The Price
-      </Typography>
-
-      <FormControl sx={{ width: "25%", mx: "auto" }}>
-        <InputLabel id="game-difficulty">Difficulty</InputLabel>
-        <Select
-          labelId="game-difficulty"
-          id="difficulty-select"
-          value={difficulty}
-          label="Difficulty"
-          onChange={(diff) => setDifficulty(diff.target.value)}
-        >
-          <MenuItem value="easy">Easy</MenuItem>
-          <MenuItem value="medium">Medium</MenuItem>
-          <MenuItem value="hard">Hard</MenuItem>
-        </Select>
-      </FormControl>
+    <Box sx={{ display: "flex", flexDirection: "column", p: 3, gap: 4 }}>
+      <Header
+        difficulty={difficulty}
+        onDifficultyChange={(value) => setDifficulty(value)}
+        gamesPerRound={gamesPerRound}
+      />
 
       <Button
         sx={{
           width: "25%",
           mx: "auto",
-          my: 5,
           minWidth: "200px",
+          height: 56,
         }}
         variant="contained"
-        onClick={games.length > 0 ? handleNextGame : startGame}
-        disabled={games.length > 0} 
+        size="large"
+        onClick={games.length > 0 && !roundComplete ? handleNextGame : startGame}
+        disabled={games.length > 0 && !roundComplete}
       >
         {getButtonText()}
       </Button>
 
       {/* PROGRESS INDICATORS */}
-      {(games.length > 0 || message.includes("Start a new round?")) && (
+      {!roundComplete && games.length > 0 && (
         <Box
-          sx={{ display: "flex", justifyContent: "center", gap: 1.5, mb: 3 }}
+          sx={{ display: "flex", justifyContent: "center", gap: 1.5 }}
         >
           {gameResults.map((result, index) => {
-            let bgColor = "grey.300";
+            let bgColor = surfaceGrey;
             if (result === true) bgColor = "success.main";
             if (result === false) bgColor = "error.main";
 
@@ -258,95 +355,33 @@ function StorePage() {
         </Box>
       )}
 
+      {/* HOW TO PLAY */}
+      {!roundComplete && games.length === 0 && (
+        <HowToPlay gamesPerRound={gamesPerRound} />
+      )}
+
       {/* GAME CARD */}
-      {currentGame && (
-        <Card sx={{ minWidth: 275, maxWidth: "75%", mx: "auto" }}>
-          <CardContent>
-            <Typography variant="h5" component="div" gutterBottom>
-              {currentGame.title}
-            </Typography>
-
-            <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-              <strong>Release Date:</strong>{" "}
-              {new Date(currentGame.releaseDate * 1000).toLocaleDateString()}
-            </Typography>
-
-            <Box
-              sx={{
-                width: "100%",
-                height: 200,
-                bgcolor: "grey.300",
-                borderRadius: 1,
-                my: 2,
-              }}
-            />
-
-            <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-              <strong>Steam Rating:</strong> {currentGame.steamRatingText} (
-              {currentGame.steamRatingPercent}%)
-            </Typography>
-
-            <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-              <strong>Metascore: </strong>
-              {currentGame.metacriticScore}
-            </Typography>
-
-            <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-              <strong>Steam Review Count:</strong>{" "}
-              {currentGame.steamRatingCount}
-            </Typography>
-
-            <Box
-              sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 2 }}
-            >
-              {/* TODO: have text field already have the $ in front of what player types */}
-              <TextField
-                label="Guess the original price"
-                variant="filled"
-                value={guess}
-                onChange={handleGuessChange}
-                onKeyDown={handleKeyDown}
-                disabled={isCorrect || attempts.length >= 3}
-                fullWidth
-                inputRef={inputRef} 
-              />
-            </Box>
-
-            <Typography 
-                variant="body2" 
-                align="center" 
-                color="text.secondary" 
-                sx={{ mt: 1 }}
-              >
-                {3 - attempts.length} tries remaining
-              </Typography>
-            
-          </CardContent>
-        </Card>
+      {!roundComplete && currentGame && (
+        <GameCard
+          game={currentGame}
+          extraData={extraData}
+          guess={guess}
+          onGuessChange={handleGuessChange}
+          onKeyDown={handleKeyDown}
+          onSubmitGuess={handleGuess}
+          isCorrect={isCorrect}
+          attemptsCount={attempts.length}
+          inputRef={inputRef}
+        />
       )}
 
       {/* MESSAGE CARD */}
-      <Card
-        sx={{
-          minWidth: 275,
-          maxWidth: 500,
-          mx: "auto",
-          my: 3,
-          visibility: message ? "visible" : "hidden", 
-        }}
-      >
-        <CardContent sx={{ textAlign: "center", py: 2 }}>
-          <Typography
-            variant="body1"
-            color={
-              message.startsWith("Correct") ? "success.main" : "error.main"
-            }
-            sx={{ fontWeight: "bold" }}
-          >
-            {message || " "} 
-          </Typography>
-        </CardContent>
-      </Card>
+      {!roundComplete && <MessageCard message={message} guessDiff={guessDiff} />}
+
+      {/* RESULTS PAGE */}
+      {roundComplete && (
+        <ResultsPage games={games} guesses={finalGuesses} results={gameResults} />
+      )}
     </Box>
   );
 }
