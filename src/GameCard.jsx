@@ -63,7 +63,7 @@ function GameCard({
       <CardContent sx={{ py: 3, px: 4 }}>
         {/* TITLE */}
         <Typography
-          variant="h3"
+          variant="h4"
           component="div"
           gutterBottom
           sx={{ fontWeight: "bold" }}
@@ -281,7 +281,7 @@ function GameCard({
                 <Typography
                   variant="body2"
                   sx={{
-                    color: getSteamRatingColor(game.steamRatingPercent),
+                    color: getSteamRatingColor(game.steamRatingText),
                     fontWeight: "bold",
                   }}
                 >
@@ -289,6 +289,7 @@ function GameCard({
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
                   {game.steamRatingCount} reviews
+                  console.log(game.steamRatingText)
                 </Typography>
               </Box>
 

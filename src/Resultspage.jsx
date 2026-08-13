@@ -43,7 +43,7 @@ function CartItem({ game, guess, isCorrect }) {
           <Box
             component="span"
             sx={{
-              color: getSteamRatingColor(game.steamRatingPercent),
+              color: getSteamRatingColor(game.steamRatingText),
               fontWeight: "bold",
             }}
           >
@@ -91,14 +91,14 @@ function ResultsPage({ games, guesses, results }) {
         gridTemplateColumns: "1fr 260px",
         columnGap: 3,
         rowGap: 2,
-        maxWidth: "60%",
+        maxWidth: 900,
         mx: "auto",
         width: "100%",
       }}
     >
       {/* HEADER ROW */}
       <Box>
-        <Typography variant="h4">Your Cart</Typography>
+        <Typography variant="h5">Your Cart</Typography>
         <Typography variant="body2" color="text.secondary">
           {games.length} items
         </Typography>
