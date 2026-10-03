@@ -1,379 +1,60 @@
-import { useState, useEffect, useRef } from "react";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import IconButton from "@mui/material/IconButton";
-import InputAdornment from "@mui/material/InputAdornment";
-import TextField from "@mui/material/TextField";
-import Typography from "@mui/material/Typography";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { getMetascoreColor, getSteamRatingColor } from "./ratingColors";
-import { arrowDarkGrey, cardDarkGrey, titleGrey } from "./theme";
+import { useState, useEffect, useRef } from 'react';
+import { getMetascoreColor, getSteamRatingColor } from './ratingColors';
+import GameDescription from './GameDescription';
 
-function GameCard({
-  game,
-  extraData,
-  guess,
-  onGuessChange,
-  onKeyDown,
-  onSubmitGuess,
-  isCorrect,
-  attemptsCount,
-  inputRef,
-}) {
+export default function GameCard({ game, extraData, guess, onGuessChange, onKeyDown, onSubmitGuess, isCorrect, attemptsCount, inputRef }) {
   const [screenshotIndex, setScreenshotIndex] = useState(0);
+  const [displayedScreenshotIndex, setDisplayedScreenshotIndex] = useState(0);
+  const screenshotRefs = useRef([]);
   const activeThumbRef = useRef(null);
-
-  // RESET SCREENSHOTS CAROUSEL WHEN NEW GAME LOADED
+  const screenshots = extraData.screenshots.length ? extraData.screenshots : game.thumb ? [game.thumb] : [];
+  const activeIndex = Math.min(screenshotIndex, Math.max(0, screenshots.length - 1));
+  const disabled = isCorrect || attemptsCount >= 3;
   useEffect(() => {
-    setScreenshotIndex(0);
-  }, [extraData.screenshots]);
-
-  // scroll active sc into view when changed
+    if (!disabled) inputRef.current?.focus();
+  }, [disabled, inputRef]);
   useEffect(() => {
-    activeThumbRef.current?.scrollIntoView({
-      behavior: "smooth",
-      inline: "center",
-      block: "nearest",
-    });
-  }, [screenshotIndex]);
-
-  const handlePrevImage = () => {
-    setScreenshotIndex(
-      (prev) =>
-        (prev - 1 + extraData.screenshots.length) %
-        extraData.screenshots.length,
-    );
+    activeThumbRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [activeIndex]);
+  const selectScreenshot = index => {
+    setScreenshotIndex(index);
+    const image = screenshotRefs.current[index];
+    if (image?.complete && image.naturalWidth > 0) setDisplayedScreenshotIndex(index);
   };
-  const handleNextImage = () => {
-    setScreenshotIndex((prev) => (prev + 1) % extraData.screenshots.length);
-  };
-
+  const cycleShot = direction => selectScreenshot((activeIndex + direction + screenshots.length) % screenshots.length);
   return (
-    <Card
-      sx={{
-        minWidth: 275,
-        maxWidth: "65%",
-        mx: "auto",
-        bgcolor: cardDarkGrey,
-      }}
-    >
-      <CardContent sx={{ py: 3, px: 4 }}>
-        {/* TITLE */}
-        <Typography
-          variant="h4"
-          component="div"
-          gutterBottom
-          sx={{ fontWeight: "bold" }}
-        >
-          {game.title}
-        </Typography>
-
-        {/* SCREENSHOT & INFO */}
-        <Box
-          sx={{
-            display: "flex",
-            gap: 3,
-            flexDirection: { xs: "column", md: "row" },
-          }}
-        >
-          {/* SCREENSHOT CAROUSEL/LOADING BLOCK */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            {extraData.screenshots.length > 0 ? (
-              <Box sx={{ width: "100%" }}>
-                <Box
-                  component="img"
-                  src={extraData.screenshots[screenshotIndex]}
-                  alt={`Screenshot ${screenshotIndex + 1}`}
-                  sx={{
-                    width: "100%",
-                    aspectRatio: "16/9",
-                    objectFit: "contain",
-                    bgcolor: "grey.900",
-                    borderRadius: 1,
-                    display: "block",
-                  }}
-                />
-
-                {/* SCREENSHOT THUMBNAILS W/ PREV/NEXT ARROWS */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.5,
-                    mt: 1,
-                  }}
-                >
-                  <IconButton
-                    onClick={handlePrevImage}
-                    disabled={extraData.screenshots.length <= 1}
-                    sx={{
-                      borderRadius: 1,
-                      flexShrink: 0,
-                      bgcolor: arrowDarkGrey,
-                      color: titleGrey,
-                      height: 45,
-                      minHeight: 45,
-                      maxHeight: 45,
-                      py: 0,
-                      px: 1,
-                      boxSizing: "border-box",
-                    }}
-                  >
-                    <ChevronLeftIcon />
-                  </IconButton>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      gap: 1,
-                      overflowX: "auto",
-                      pb: 0.5,
-                      flexGrow: 1,
-                    }}
-                  >
-                    {extraData.screenshots.map((url, index) => (
-                      <Box
-                        key={index}
-                        ref={index === screenshotIndex ? activeThumbRef : null}
-                        component="img"
-                        src={url}
-                        alt={`Screenshot thumbnail ${index + 1}`}
-                        onClick={() => setScreenshotIndex(index)}
-                        sx={{
-                          width: 80,
-                          height: 45,
-                          objectFit: "cover",
-                          borderRadius: 1,
-                          flexShrink: 0,
-                          cursor: "pointer",
-                          opacity: index === screenshotIndex ? 1 : 0.5,
-                          border: 2,
-                          borderColor:
-                            index === screenshotIndex
-                              ? "primary.main"
-                              : "transparent",
-                        }}
-                      />
-                    ))}
-                  </Box>
-
-                  <IconButton
-                    onClick={handleNextImage}
-                    disabled={extraData.screenshots.length <= 1}
-                    sx={{
-                      borderRadius: 1,
-                      flexShrink: 0,
-                      bgcolor: arrowDarkGrey,
-                      color: titleGrey,
-                      height: 45,
-                      minHeight: 45,
-                      maxHeight: 45,
-                      py: 0,
-                      px: 1,
-                      boxSizing: "border-box",
-                    }}
-                  >
-                    <ChevronRightIcon />
-                  </IconButton>
-                </Box>
-              </Box>
-            ) : game.thumb ? (
-              <Box
-                component="img"
-                src={game.thumb}
-                alt={game.title}
-                sx={{
-                  width: "100%",
-                  aspectRatio: "16/9",
-                  objectFit: "contain",
-                  bgcolor: "grey.900",
-                  borderRadius: 1,
-                  display: "block",
-                }}
-              />
-            ) : (
-              <Box
-                sx={{
-                  width: "100%",
-                  aspectRatio: "16/9",
-                  bgcolor: "grey.300",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 1,
-                }}
-              >
-                <Typography color="text.secondary">
-                  {extraData.description
-                    ? "Image Unavailable"
-                    : "Loading Media..."}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-
-          <Box
-            sx={{
-              flex: 1,
-              minWidth: 0,
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-            }}
-          >
-            {/* DESCRIPTION */}
-            <Box
-              sx={{
-                flexGrow: 1,
-                minHeight: 0,
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: "bold" }}>
-                Description
-              </Typography>
-              {extraData.description ? (
-                <Typography
-                  color="text.secondary"
-                  sx={{
-                    flexGrow: 1,
-                    minHeight: 0,
-                    maxHeight: "20vh",
-                    overflowY: "auto",
-                    pr: 1,
-                  }}
-                >
-                  {extraData.description}
-                </Typography>
-              ) : (
-                <Typography color="text.secondary" sx={{ fontStyle: "italic" }}>
-                  No description available.
-                </Typography>
-              )}
-            </Box>
-
-            {/* RELEASE DATE */}
-            <Typography variant="body2" color="text.secondary">
-              <Box component="span" sx={{ fontWeight: "bold" }}>
-                Release Date:
-              </Box>{" "}
-              {new Date(game.releaseDate * 1000).toLocaleDateString()}
-            </Typography>
-
-            {/* RATING BADGES */}
-            <Box sx={{ display: "flex", gap: 2, alignItems: "stretch" }}>
-              <Box
-                sx={{
-                  flex: 1,
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  p: 1,
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  Steam Reviews
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: getSteamRatingColor(game.steamRatingText),
-                    fontWeight: "bold",
-                  }}
-                >
-                  {game.steamRatingText} ({game.steamRatingPercent}%)
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {game.steamRatingCount} reviews
-                  console.log(game.steamRatingText)
-                </Typography>
-              </Box>
-
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minWidth: 64,
-                  borderRadius: 1,
-                  p: 1,
-                  bgcolor:
-                    game.metacriticScore > 0
-                      ? getMetascoreColor(game.metacriticScore)
-                      : "grey.300",
-                }}
-              >
-                <Typography variant="body2" sx={{ color: "white" }}>
-                  Metascore
-                </Typography>
-                <Typography
-                  variant="h6"
-                  sx={{ color: "white", fontWeight: "bold" }}
-                >
-                  {game.metacriticScore > 0 ? game.metacriticScore : "N/A"}
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* GUESS INPUT */}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-                mt: "auto",
-              }}
-            >
-              <TextField
-                variant="filled"
-                hiddenLabel
-                value={guess}
-                onChange={onGuessChange}
-                onKeyDown={onKeyDown}
-                disabled={isCorrect || attemptsCount >= 3}
-                fullWidth
-                inputRef={inputRef}
-                autoComplete="off"
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">$</InputAdornment>
-                    ),
-                  },
-                }}
-              />
-              {/* SUBMIT GUESS */}
-              <Button
-                variant="contained"
-                color="success"
-                size="large"
-                fullWidth
-                onClick={onSubmitGuess}
-                disabled={isCorrect || attemptsCount >= 3}
-                sx={{ height: 56 }}
-              >
-                Add To Cart
-              </Button>
-            </Box>
-
-            <Typography
-              variant="body2"
-              align="center"
-              color="text.secondary"
-              sx={{ fontWeight: "bold" }}
-            >
-              {3 - attemptsCount} tries remaining
-            </Typography>
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
+    <section className="game-card panel screen-enter" aria-labelledby="game-title">
+      <div className="card-topbar"><span className="eyebrow">Guess the price</span><span className="guesses-badge">{3 - attemptsCount} guesses left</span></div>
+      <div className="game-grid">
+        <h2 id="game-title" className="game-title">{game.title}</h2>
+        <div className="game-media">
+          <div className="main-screenshot">
+            {screenshots.length ? screenshots.map((url, index) => <img
+              key={`${url}-${index}`}
+              ref={element => { screenshotRefs.current[index] = element; }}
+              src={url}
+              className={`screenshot-layer ${index === displayedScreenshotIndex ? 'visible' : ''}`}
+              alt={`${game.title} screenshot ${index + 1}`}
+              aria-hidden={index !== displayedScreenshotIndex}
+              onLoad={() => { if (index === activeIndex) setDisplayedScreenshotIndex(index); }}
+            />) : <p>Loading media…</p>}
+          </div>
+          {screenshots.length > 0 && <div className="screenshot-controls">
+            <button className="arrow-button" aria-label="Previous screenshot" disabled={screenshots.length <= 1} onClick={() => cycleShot(-1)}>‹</button>
+            <div className="thumbnail-rail">{screenshots.map((url, index) => <button key={`${url}-${index}`} ref={index === activeIndex ? activeThumbRef : null} className={`thumbnail ${index === activeIndex ? 'selected' : ''}`} aria-label={`Show screenshot ${index + 1}`} aria-pressed={index === activeIndex} onClick={() => selectScreenshot(index)}><img src={url} alt="" /></button>)}</div>
+            <button className="arrow-button" aria-label="Next screenshot" disabled={screenshots.length <= 1} onClick={() => cycleShot(1)}>›</button>
+          </div>}
+        </div>
+        <div className="game-details">
+          <div><p className="eyebrow">About this game</p><GameDescription key={extraData.description} description={extraData.description || 'Loading game details…'} />
+            <p className="eyebrow release-label">Released</p><p className="release-date">{new Date(game.releaseDate * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+          </div>
+          <div className="rating-row"><div className="steam-rating"><p className="eyebrow">Steam reviews</p><p className="review-score" style={{ color: getSteamRatingColor(game.steamRatingText) }}>{game.steamRatingText} ({game.steamRatingPercent}%)</p><p className="review-count">{Number(game.steamRatingCount).toLocaleString()} reviews</p></div>
+            <div className="metascore" style={{ backgroundColor: game.metacriticScore > 0 ? getMetascoreColor(game.metacriticScore) : '#d6d7d8' }}><span className="eyebrow">Metascore</span><strong>{game.metacriticScore > 0 ? game.metacriticScore : 'N/A'}</strong></div>
+          </div>
+          <div className="guess-form"><label className="eyebrow" htmlFor="price-guess">Enter your guess</label><div className="guess-controls"><div className="price-input"><span aria-hidden="true">$</span><input id="price-guess" ref={inputRef} value={guess} onChange={onGuessChange} onKeyDown={onKeyDown} disabled={disabled} autoComplete="off" inputMode="numeric" placeholder="0" /></div><button className="primary-button" onClick={onSubmitGuess} disabled={disabled}>Add to cart</button></div></div>
+        </div>
+      </div>
+    </section>
   );
 }
-
-export default GameCard;
