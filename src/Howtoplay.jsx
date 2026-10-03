@@ -1,51 +1,17 @@
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import Typography from "@mui/material/Typography";
-
-function HowToPlay({ gamesPerRound }) {
+export default function HowToPlay({ gamesPerRound, onClose }) {
   return (
-    <Card sx={{ maxWidth: 600, mx: "auto" }}>
-      <CardContent sx={{ p: 3 }}>
-        <Typography variant="h5" gutterBottom>
-          How to Play
-        </Typography>
-        <Typography sx={{ mb: 2, lineHeight: 1.6 }}>
-          You'll be shown {gamesPerRound} real games from the Steam store with
-          their screenshots, description, release date, and review scores.
-          Your job is to guess the current price of the game.
-        </Typography>
-        <List sx={{ pl: 1 }}>
-          <ListItem disableGutters sx={{ display: "list-item", pl: 1, mb: 1.5 }}>
-            <ListItemText
-              slotProps={{ primary: { sx: { lineHeight: 1.6 } } }}
-              primary="Enter a whole dollar guess (no cents needed) and press Enter or click 'Add to Cart'."
-            />
-          </ListItem>
-          <ListItem disableGutters sx={{ display: "list-item", pl: 1, mb: 1.5 }}>
-            <ListItemText
-              slotProps={{ primary: { sx: { lineHeight: 1.6 } } }}
-              primary="You get 3 tries per game. You're marked correct if your guess rounds to the actual price (e.g. if a game is 9.99, guessing 10 or 9 will count as correct)."
-            />
-          </ListItem>
-          <ListItem disableGutters sx={{ display: "list-item", pl: 1, mb: 1.5 }}>
-            <ListItemText
-              slotProps={{ primary: { sx: { lineHeight: 1.6 } } }}
-              primary={`After ${gamesPerRound} games, see how your guesses stacked up against the real total on the results screen.`}
-            />
-          </ListItem>
-          <ListItem disableGutters sx={{ display: "list-item", pl: 1 }}>
-            <ListItemText
-              slotProps={{ primary: { sx: { lineHeight: 1.6 } } }}
-              primary="Difficulty changes which games you'll see: Easy will have some well-known hits, Hard dives into more obscure titles."
-            />
-          </ListItem>
-        </List>
-      </CardContent>
-    </Card>
+    <section className="how-to-play panel">
+      <div className="help-heading"><div><p className="eyebrow accent-green">Welcome to Checkout Champion</p><h2 id="how-to-play-title">How to Play</h2></div>
+        {onClose && <button className="close-button" onClick={onClose} aria-label="Close how to play">×</button>}
+      </div>
+      <p>You’ll be shown {gamesPerRound} real games from the Steam store with their screenshots, description, release date, and review scores. Your job is to guess the original price of each game.</p>
+      <ol>
+        <li>Enter a whole dollar guess — no cents needed — then press Enter or select <strong>Add to Cart</strong>.</li>
+        <li>You get 3 tries per game. A game at $9.99 accepts either $9 or $10. The hints tell you if your guess is too high or too low.</li>
+        <li>After {gamesPerRound} games, compare your cart total with the real total on the results screen.</li>
+        <li>Easy features familiar hits. Hard dives into more obscure titles.</li>
+      </ol>
+      {onClose && <button className="primary-button help-dismiss" onClick={onClose}>Got it — let’s play</button>}
+    </section>
   );
 }
-
-export default HowToPlay;
