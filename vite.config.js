@@ -17,6 +17,7 @@ export default defineConfig({
       '@mui/material/styles',
       '@mui/material/CssBaseline',
       '@mui/material/Dialog',
+      '@mui/material/Tooltip',
       '@mui/material/Select',
       '@mui/material/MenuItem',
       '@mui/icons-material/KeyboardArrowDownRounded',
