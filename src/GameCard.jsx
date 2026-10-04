@@ -48,7 +48,14 @@ export default function GameCard({ game, extraData, guess, onGuessChange, onKeyD
                 }
               }}
             />) : <p>Loading media…</p>}
-            {screenshots.length > 0 && <Tooltip title="Enlarge screenshot" enterDelay={0} enterNextDelay={0} placement="top" disableInteractive>
+            {screenshots.length > 0 && <Tooltip title="Enlarge screenshot" enterDelay={0} enterNextDelay={0} placement="top" disableInteractive
+              slotProps={{
+                popper: {
+                  popperOptions: { modifiers: [{ name: 'offset', options: { offset: [0, -4] } }] },
+                  sx: { '&[data-popper-placement*="top"] .MuiTooltip-tooltip': { marginBottom: 0 } },
+                },
+                tooltip: { sx: { backgroundColor: '#132331', color: '#d6e5ef', border: '1px solid #3b5b70' } },
+              }}>
               <button className="enlarge-screenshot" aria-label="Enlarge screenshot" onClick={() => setViewerOpen(true)}>
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m6 0h6v-6" /></svg>
               </button>
