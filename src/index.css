@@ -91,11 +91,6 @@ h2 { font-family: 'Jersey 10', sans-serif; font-size: clamp(2rem, 3.5vw, 2.8rem)
 .guess-controls .primary-button { border-left: 0; border-radius: 0 2px 2px 0; white-space: nowrap; padding: 12px 20px; }
 .message-card { display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 14px 24px; max-width: 600px; margin: 20px auto 0; border: 1px solid #365367; border-radius: 4px; background: #0e1b26; text-align: center; visibility: hidden; font: 400 24px/1 'Jersey 10', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
 .message-card.visible { visibility: visible; }
-.message-card.correct-message { position: relative; }
-.feedback-confetti { position: absolute; inset: -70px 0 -40px; overflow: hidden; pointer-events: none; }
-.confetti-piece { position: absolute; top: 60%; width: 6px; height: 10px; border-radius: 1px; opacity: 0; animation: feedback-confetti 1.1s ease-out both; }
-@keyframes feedback-confetti { 0% { opacity: 0; transform: translate(0, 0) rotate(0deg); } 12% { opacity: 1; } 45% { opacity: 1; transform: translate(var(--drift), var(--rise)) rotate(var(--rotation)); } 100% { opacity: 0; transform: translate(calc(var(--drift) * 1.6), 35px) rotate(calc(var(--rotation) * 2)); } }
-@media (prefers-reduced-motion: reduce) { .feedback-confetti { display: none; } }
 .message-card.incorrect-message { animation: feedback-shake .32s ease-in-out; }
 @keyframes feedback-shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
 .message-card.correct-message { border-color: #5e8e1c; background: #75b022; color: #efffe8; }
