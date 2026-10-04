@@ -1,6 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Jacquard+12&family=Jersey+10&family=Source+Sans+3:wght@400;500;600;700&family=VT323&display=swap');
 
 :root { font-family: 'Source Sans 3', sans-serif; color: #d6e5ef; background: #172b3a; font-synthesis: none; }
+html { scrollbar-color: #4a667b #101c27; scrollbar-width: thin; }
+html::-webkit-scrollbar { width: 10px; height: 10px; }
+html::-webkit-scrollbar-track { background: #101c27; }
+html::-webkit-scrollbar-thumb { background: #4a667b; border: 2px solid #101c27; border-radius: 6px; }
+html::-webkit-scrollbar-thumb:hover { background: #67c1f5; }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; background-color: #172b3a; background-image: radial-gradient(ellipse 52% 38% at 50% 0%, #448bb83d, transparent 72%), url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.38'/%3E%3C/svg%3E"), linear-gradient(180deg, #1c394d, #172b3a 48%, #101c27); background-size: auto, 180px 180px, auto; background-blend-mode: screen, soft-light, normal; background-attachment: fixed; }
 button, input, select { font: inherit; }
@@ -91,6 +96,7 @@ h2 { font-family: 'Jersey 10', sans-serif; font-size: clamp(2rem, 3.5vw, 2.8rem)
 .guess-controls .primary-button { border-left: 0; border-radius: 0 2px 2px 0; white-space: nowrap; padding: 12px 20px; }
 .message-card { display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 14px 24px; max-width: 600px; margin: 20px auto 0; border: 1px solid #365367; border-radius: 4px; background: #0e1b26; text-align: center; visibility: hidden; font: 400 24px/1 'Jersey 10', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
 .message-card.visible { visibility: visible; }
+.game-card + .message-card { margin-top: 32px; }
 .message-card.incorrect-message { animation: feedback-shake .32s ease-in-out; }
 @keyframes feedback-shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
 .message-card.correct-message { border-color: #5e8e1c; background: #75b022; color: #efffe8; }
@@ -117,9 +123,10 @@ h2 { font-family: 'Jersey 10', sans-serif; font-size: clamp(2rem, 3.5vw, 2.8rem)
 .results-heading > p:last-child { color: #9eb7c9; }
 .results-grid { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 24px; }
 .cart-items { display: flex; flex-direction: column; gap: 12px; }
-.cart-item { display: flex; gap: 20px; padding: 18px; align-items: center; }
-.cart-item > img { width: 100px; height: auto; max-height: 64px; object-fit: contain; flex-shrink: 0; border-radius: 2px; }
-.cart-game-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.cart-item { display: grid; grid-template-columns: 180px minmax(0, 1fr) auto; gap: 12px; padding: 18px; align-items: center; }
+.cart-thumbnail { position: relative; align-self: stretch; min-width: 0; margin-block: 6px 4px; border-radius: 2px; overflow: hidden; }
+.cart-thumbnail img { position: absolute; top: 0; left: 0; width: auto; height: 100%; max-width: 100%; object-fit: contain; object-position: left center; }
+.cart-game-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .cart-game-info h3 { font-family: 'Jersey 10', sans-serif; font-size: 24px; font-weight: 400; letter-spacing: 1px; line-height: 1.2; margin: 0; }
 .cart-game-info > p { margin: 0; font-size: 14px; line-height: 1.4; }
 .cart-game-info > p:not(.review-count) { font-weight: 700; }
@@ -143,5 +150,5 @@ footer { padding: 24px 20px; text-align: center; font: 15px 'VT323', monospace; 
 ::selection { background: #67c1f5; color: #101d29; }
 @media (max-width: 1000px) { .game-grid { padding: 36px; } .game-details { gap: 20px; } }
 @media (max-width: 800px) { .site-header { padding-top: 28px; } .main-content { padding-top: 36px; } .game-grid { grid-template-columns: 1fr; gap: 28px; } .game-details { padding-top: 0; } .game-description { max-height: 200px; } .results-grid { grid-template-columns: 1fr; } .cart-summary { position: static; } }
-@media (max-width: 480px) { .site-header, .main-content { width: calc(100% - 40px); } .site-title { display: flex; align-items: baseline; gap: 5px; font-size: 44px; } .game-grid { padding: 24px 20px; } .round-progress > .eyebrow { font-size: 15px; } .progress-step { width: 22px; } .how-to-play, .state-card { padding: 24px; } .state-card { margin: 36px auto; } .guess-controls .primary-button { padding: 12px; font-size: 12px; } .cart-item { flex-wrap: wrap; gap: 12px; } .cart-item > img { width: 70px; } .cart-price { flex-direction: row; align-items: center; gap: 12px; width: 100%; justify-content: flex-end; } }
+@media (max-width: 480px) { .site-header, .main-content { width: calc(100% - 40px); } .site-title { display: flex; align-items: baseline; gap: 5px; font-size: 44px; } .game-grid { padding: 24px 20px; } .round-progress > .eyebrow { font-size: 15px; } .progress-step { width: 22px; } .how-to-play, .state-card { padding: 24px; } .state-card { margin: 36px auto; } .guess-controls .primary-button { padding: 12px; font-size: 12px; } .cart-item { grid-template-columns: 90px minmax(0, 1fr); gap: 12px; } .cart-price { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 12px; width: 100%; justify-content: flex-end; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; transition: none !important; } }
