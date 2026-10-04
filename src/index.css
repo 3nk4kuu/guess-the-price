@@ -39,6 +39,8 @@ h2 { font-family: 'Jersey 10', sans-serif; font-size: clamp(2rem, 3.5vw, 2.8rem)
 .main-content { width: min(1160px, calc(100% - 64px)); margin: 0 auto; padding: 48px 0; flex: 1; }
 .main-content:not(.welcome-main) { padding-top: 32px; }
 .welcome-main { display: flex; align-items: center; justify-content: center; }
+.main-content.state-main { display: flex; align-items: center; justify-content: center; padding-block: 48px; }
+.state-main .state-card { width: min(760px, 100%); margin: 0; }
 .welcome-screen { width: 100%; }
 .eyebrow { font: 15px 'VT323', monospace; text-transform: uppercase; letter-spacing: .14em; color: #8fabc0; }
 .accent-blue { color: #67c1f5; }
@@ -96,7 +98,7 @@ h2 { font-family: 'Jersey 10', sans-serif; font-size: clamp(2rem, 3.5vw, 2.8rem)
 .guess-controls .primary-button { border-left: 0; border-radius: 0 2px 2px 0; white-space: nowrap; padding: 12px 20px; }
 .message-card { display: flex; align-items: center; justify-content: center; min-height: 52px; padding: 14px 24px; max-width: 600px; margin: 20px auto 0; border: 1px solid #365367; border-radius: 4px; background: #0e1b26; text-align: center; visibility: hidden; font: 400 24px/1 'Jersey 10', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
 .message-card.visible { visibility: visible; }
-.game-card + .message-card { margin-top: 32px; }
+.game-card + .message-card { margin-top: 24px; }
 .message-card.incorrect-message { animation: feedback-shake .32s ease-in-out; }
 @keyframes feedback-shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
 .message-card.correct-message { border-color: #5e8e1c; background: #75b022; color: #efffe8; }
