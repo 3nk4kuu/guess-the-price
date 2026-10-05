@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Analytics } from '@vercel/analytics/react'
 import CssBaseline from '@mui/material/CssBaseline'
 import { ThemeProvider } from '@mui/material/styles'
 import StorePage from './StorePage.jsx'
@@ -11,6 +12,7 @@ createRoot(document.getElementById('root')).render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <StorePage />
+      <Analytics mode={import.meta.env.DEV ? 'development' : 'production'} />
     </ThemeProvider>
   </StrictMode>,
 )
