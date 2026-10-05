@@ -117,7 +117,8 @@ h2 { font-family: 'Jersey 10', sans-serif; font-size: clamp(2rem, 3.5vw, 2.8rem)
 .game-card + .message-card { margin-top: 24px; }
 .message-card.incorrect-message { animation: feedback-shake .32s ease-in-out; }
 @keyframes feedback-shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
-.message-card.correct-message { border-color: #5e8e1c; background: #75b022; color: #efffe8; }
+.message-card.correct-message { border-color: #5e8e1c; background: #75b022; color: #efffe8; animation: feedback-celebrate 1.5s ease-in-out; transform-origin: center; }
+@keyframes feedback-celebrate { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 .message-card.temperature-message { border-color: transparent; background: linear-gradient(120deg, var(--indicator-color), color-mix(in srgb, var(--indicator-color), white 8%)); }
 .how-to-play { max-width: 680px; padding: 36px; margin: 0 auto; }
 .help-heading { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 28px; }

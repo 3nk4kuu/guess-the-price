@@ -5,8 +5,8 @@ import ResultsPage from "./Resultspage";
 import Header from "./Header";
 import HowToPlay from "./Howtoplay";
 
-const nextRoundTimer = 2000;
-const correctAnswerTimer = 2500;
+const nextRoundTimer = 1500;
+const correctAnswerTimer = nextRoundTimer;
 const gamesPerRound = 5;
 
 function StorePage() {
