@@ -6,7 +6,7 @@ import Header from "./Header";
 import HowToPlay from "./Howtoplay";
 
 const nextRoundTimer = 1500;
-const correctAnswerTimer = nextRoundTimer + 1000;
+const correctAnswerTimer = nextRoundTimer;
 const gamesPerRound = 5;
 
 function StorePage() {
@@ -45,6 +45,8 @@ function StorePage() {
     description: "",
     screenshots: [],
   });
+  const detailsLoading = currentGame && !roundComplete && extraData.gameTitle !== currentGame.title;
+  const showingLoading = loading || detailsLoading;
 
   // AUTOFOCUS INPUT FIELD
   useEffect(() => {
@@ -60,77 +62,61 @@ function StorePage() {
 
   // FETCHING RAWG API DATA FOR NEXT GAME
   useEffect(() => {
+    if (loading || !currentGame || roundComplete) return;
+    let active = true;
+    const cache = nextGameData.current;
     const fetchRawgData = (gameToFetch) => {
-      if (!gameToFetch || nextGameData.current[gameToFetch.title]) return;
-
-      const RAWG_KEY = import.meta.env.VITE_RAWG_KEY;
-
-      fetch(
-        `https://api.rawg.io/api/games?search=${encodeURIComponent(gameToFetch.title)}&key=${RAWG_KEY}`,
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          const rawgGame = data.results[0];
-
-          if (rawgGame) {
-            const screenshots =
-              rawgGame.short_screenshots?.map((s) => s.image) || [];
-
-            fetch(
+      if (!cache[gameToFetch.title]) {
+        cache[gameToFetch.title] = (async () => {
+          const fallback = {
+            gameTitle: gameToFetch.title,
+            description: "No description available.",
+            screenshots: gameToFetch.thumb ? [gameToFetch.thumb] : [],
+          };
+          try {
+            const RAWG_KEY = import.meta.env.VITE_RAWG_KEY;
+            const response = await fetch(
+              `https://api.rawg.io/api/games?search=${encodeURIComponent(gameToFetch.title)}&key=${RAWG_KEY}`,
+            );
+            if (!response.ok) throw new Error(`RAWG search failed: ${response.status}`);
+            const data = await response.json();
+            const rawgGame = data.results?.[0];
+            if (!rawgGame) return fallback;
+            const detailResponse = await fetch(
               `https://api.rawg.io/api/games/${rawgGame.id}?key=${RAWG_KEY}`,
-            )
-              .then((response) => response.json())
-              .then((detailData) => {
-                const gameData = {
-                  description:
-                    detailData.description_raw || "No description available.",
-                  screenshots: screenshots,
-                };
-
-                nextGameData.current[gameToFetch.title] = gameData;
-                screenshots.forEach((url) => {
-                  const img = new Image();
-                  img.src = url;
-                });
-                if (currentGame && gameToFetch.title === currentGame.title) {
-                  setExtraData(gameData);
-                }
-              });
-          } else {
-            // RAWG HAS NOTHING FOR THIS TITLE - FALL BACK TO CHEAPSHARK'S THUMBNAIL
-            const gameData = {
-              description: "No description available.",
-              screenshots: gameToFetch.thumb ? [gameToFetch.thumb] : [],
+            );
+            if (!detailResponse.ok) throw new Error(`RAWG details failed: ${detailResponse.status}`);
+            const detailData = await detailResponse.json();
+            const screenshots = rawgGame.short_screenshots?.map(s => s.image) || [];
+            screenshots.forEach(url => {
+              const img = new Image();
+              img.src = url;
+            });
+            return {
+              gameTitle: gameToFetch.title,
+              description: detailData.description_raw || fallback.description,
+              screenshots,
             };
-            nextGameData.current[gameToFetch.title] = gameData;
-            if (currentGame && gameToFetch.title === currentGame.title) {
-              setExtraData(gameData);
-            }
+          } catch (error) {
+            console.error("RAWG API failed", error);
+            return fallback;
           }
-        })
-        .catch((error) => {
-          console.error("RAWG API failed", error);
-        });
+        })();
+      }
+      return cache[gameToFetch.title];
     };
-
-    if (games.length > 0) {
-      const current = games[gameIndex];
-      const next = games[gameIndex + 1];
-
-      if (current && nextGameData.current[current.title]) {
-        setExtraData(nextGameData.current[current.title]);
-      } else {
-        fetchRawgData(current);
-      }
-      if (next) {
-        fetchRawgData(next);
-      }
-    }
-  }, [gameIndex, games, currentGame]);
+    fetchRawgData(currentGame).then(gameData => {
+      if (active) setExtraData(gameData);
+    });
+    const next = games[gameIndex + 1];
+    if (next) fetchRawgData(next);
+    return () => { active = false; };
+  }, [gameIndex, games, currentGame, loading, roundComplete]);
 
   // GAME LOGIC
   const startGame = () => {
     setLoading(true);
+    setGames([]);
     setLoadError(false);
     setGuess("");
     setMessage("");
@@ -224,7 +210,7 @@ function StorePage() {
   };
 
   const handleGuess = () => {
-    if (games.length === 0 || isCorrect || attempts.length >= 3) return;
+    if (showingLoading || games.length === 0 || isCorrect || attempts.length >= 3) return;
     setFeedbackSequence(sequence => sequence + 1);
 
     const guessInt = parseInt(guess, 10);
@@ -302,14 +288,14 @@ function StorePage() {
   return (
     <div className="app-shell">
       <Header difficulty={difficulty} onDifficultyChange={setDifficulty} gamesPerRound={gamesPerRound} disabled={loading || (games.length > 0 && !roundComplete)} />
-      <main className={`main-content ${!loading && !loadError && !roundComplete && !currentGame ? 'welcome-main' : ''}`}>
-        {loading || loadError ? (
+      <main className={`main-content ${showingLoading || loadError ? 'state-main' : !roundComplete && !currentGame ? 'welcome-main' : ''}`}>
+        {showingLoading || loadError ? (
           <section className="state-card panel screen-enter" aria-live="polite">
-            <div className={`state-icon ${loading ? 'loading' : 'error'}`}>{loading ? <span className="spinner" /> : '!'}</div>
-            <p className="eyebrow accent-blue">{loading ? 'Finding your next game' : 'Connection lost'}</p>
-            <h2>{loading ? 'Curating your cart…' : 'Well, that’s inconvenient.'}</h2>
-            <p>{loading ? 'We’re looking for a game with a price worth guessing. Your next round will be ready in a moment.' : message}</p>
-            {!loading && <button className="primary-button" onClick={startGame}>Try again</button>}
+            <div className={`state-icon ${showingLoading ? 'loading' : 'error'}`}>{showingLoading ? <span className="spinner" /> : '!'}</div>
+            <p className="eyebrow accent-blue">{showingLoading ? 'Finding your next game' : 'Connection lost'}</p>
+            <h2>{showingLoading ? 'Curating your cart…' : 'Well, that’s inconvenient.'}</h2>
+            <p>{showingLoading ? 'We’re looking for a game with a price worth guessing. Your next round will be ready in a moment.' : message}</p>
+            {!showingLoading && <button className="primary-button" onClick={startGame}>Try again</button>}
           </section>
         ) : roundComplete ? (
           <><ResultsPage games={games} guesses={finalGuesses} results={gameResults} /><div className="start-action"><button className="primary-button replay-button" onClick={startGame}>Continue shopping</button></div></>
