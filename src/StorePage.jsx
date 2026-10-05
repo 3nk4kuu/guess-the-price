@@ -74,27 +74,19 @@ function StorePage() {
             screenshots: gameToFetch.thumb ? [gameToFetch.thumb] : [],
           };
           try {
-            const RAWG_KEY = import.meta.env.VITE_RAWG_KEY;
             const response = await fetch(
-              `https://api.rawg.io/api/games?search=${encodeURIComponent(gameToFetch.title)}&key=${RAWG_KEY}`,
+              `/api/game-details?title=${encodeURIComponent(gameToFetch.title)}`,
             );
-            if (!response.ok) throw new Error(`RAWG search failed: ${response.status}`);
+            if (!response.ok) throw new Error(`Game details failed: ${response.status}`);
             const data = await response.json();
-            const rawgGame = data.results?.[0];
-            if (!rawgGame) return fallback;
-            const detailResponse = await fetch(
-              `https://api.rawg.io/api/games/${rawgGame.id}?key=${RAWG_KEY}`,
-            );
-            if (!detailResponse.ok) throw new Error(`RAWG details failed: ${detailResponse.status}`);
-            const detailData = await detailResponse.json();
-            const screenshots = rawgGame.short_screenshots?.map(s => s.image) || [];
+            const screenshots = data.screenshots?.length ? data.screenshots : fallback.screenshots;
             screenshots.forEach(url => {
               const img = new Image();
               img.src = url;
             });
             return {
               gameTitle: gameToFetch.title,
-              description: detailData.description_raw || fallback.description,
+              description: data.description || fallback.description,
               screenshots,
             };
           } catch (error) {
