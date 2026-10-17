@@ -18,7 +18,10 @@ h1, h2, h3, p { margin: 0; }
 h2 { font-family: 'Jersey 10', sans-serif; font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 400; letter-spacing: 1px; line-height: 1; color: #fff; }
 .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
 .site-header { width: min(1240px, calc(100% - 64px)); margin: 0 auto; padding-top: 40px; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-.site-title { display: flex; align-items: baseline; gap: 5px; font-size: clamp(2.8rem, 6vw, 5rem); line-height: 1; font-weight: 400; white-space: nowrap; }
+.site-brand { display: flex; align-items: center; gap: 10px; font-size: clamp(2.8rem, 6vw, 5rem); }
+.site-icon { width: .5599276em; height: .6067327em; flex-shrink: 0; overflow: hidden; }
+.site-icon image { image-rendering: pixelated; }
+.site-title { display: flex; align-items: baseline; gap: 5px; font-size: inherit; line-height: 1; font-weight: 400; white-space: nowrap; }
 .site-title span:first-child { font-family: 'Jacquard 12', serif; color: #d9f1ff; }
 .site-title span:last-child { font-family: 'Jersey 10', sans-serif; color: #67c1f5; letter-spacing: -2px; }
 .header-controls { display: flex; gap: 10px; align-items: center; }
@@ -126,8 +129,8 @@ h2 { font-family: 'Jersey 10', sans-serif; font-size: clamp(2rem, 3.5vw, 2.8rem)
 .how-to-play > p, .how-to-play li { line-height: 1.7; font-size: 17px; color: #f0f6fa; }
 .how-to-play ol { padding-left: 24px; margin: 20px 0 0; }
 .how-to-play li { padding-left: 4px; margin-top: 16px; }
-.how-to-play li > ul { padding-left: 20px; margin: 0; list-style-type: disc; }
-.how-to-play li > ul > li { margin-top: 6px; }
+.help-inline-box { padding: 2px 6px; border-radius: 3px; background: rgb(117 176 34 / 25%); color: #f0f6fa; font: inherit; white-space: nowrap; }
+.help-hint-box { margin: 10px 0 0; padding: 10px 12px; border-radius: 4px; background: rgb(117 176 34 / 25%); color: #f0f6fa; }
 .close-button { width: 36px; height: 36px; border: 0; background: transparent; border-radius: 2px; font-size: 24px; flex-shrink: 0; }
 .help-dismiss { width: 100%; margin-top: 28px; }
 .start-action { text-align: center; margin-top: 28px; }
@@ -171,5 +174,5 @@ footer { padding: 24px 20px; text-align: center; font: 15px 'VT323', monospace; 
 ::selection { background: #67c1f5; color: #101d29; }
 @media (max-width: 1000px) { .game-grid { padding: 36px; } .game-details { gap: 20px; } }
 @media (max-width: 800px) { .site-header { padding-top: 28px; } .main-content { padding-top: 36px; } .game-grid { grid-template-columns: 1fr; gap: 28px; } .game-details { padding-top: 0; } .results-grid { grid-template-columns: 1fr; } .cart-summary { position: static; } }
-@media (max-width: 480px) { .site-header, .main-content { width: calc(100% - 40px); } .site-title { display: flex; align-items: baseline; gap: 5px; font-size: 44px; } .game-grid { padding: 24px 20px; } .round-progress > .eyebrow { font-size: 15px; } .progress-step { width: 22px; } .how-to-play, .state-card { padding: 24px; } .state-card { margin: 36px auto; } .guess-controls .primary-button { padding: 12px; font-size: 12px; } .cart-item { grid-template-columns: 90px minmax(0, 1fr); gap: 12px; } .cart-price { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 12px; width: 100%; justify-content: flex-end; } }
+@media (max-width: 480px) { .site-header, .main-content { width: calc(100% - 40px); } .site-brand { gap: 10px; font-size: clamp(30px, 8vw, 38px); } .site-title { font-size: inherit; } .game-grid { padding: 24px 20px; } .round-progress > .eyebrow { font-size: 15px; } .progress-step { width: 22px; } .how-to-play, .state-card { padding: 24px; } .state-card { margin: 36px auto; } .guess-controls .primary-button { padding: 12px; font-size: 12px; } .cart-item { grid-template-columns: 90px minmax(0, 1fr); gap: 12px; } .cart-price { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 12px; width: 100%; justify-content: flex-end; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; transition: none !important; } }

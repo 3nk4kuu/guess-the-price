@@ -9,7 +9,12 @@ export default function Header({ difficulty, onDifficultyChange, gamesPerRound, 
   const [howToPlayOpen, setHowToPlayOpen] = useState(false);
   return (
     <header className="site-header">
-      <h1 className="site-title"><span>Checkout</span> <span>Champion</span></h1>
+      <div className="site-brand">
+        <h1 className="site-title"><span>Checkout</span> <span>Champion</span></h1>
+        <svg className="site-icon" viewBox="80 64 384 416" aria-hidden="true">
+          <image href="/checkout-icon.png" width="512" height="512" />
+        </svg>
+      </div>
       <div className="header-controls">
         <div className="difficulty-control"><span id="difficulty-label">Difficulty</span>
           <Select className="difficulty-select" labelId="difficulty-label" value={difficulty} onChange={event => onDifficultyChange(event.target.value)} disabled={disabled} IconComponent={KeyboardArrowDownRounded}
